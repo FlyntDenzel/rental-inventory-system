@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum ItemCategory {
+  CANOPY
+  CHAIR
+  TABLE
+  DECORATION
+  OTHER
+}
+
+enum ItemStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+  DAMAGED
+}
+
+enum RentalStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  password      String
+  role          Role     @default(STAFF)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  rentalsCreated Rental[] @relation("CreatedBy")
+  paymentsRecorded Payment[] @relation("RecordedBy")
+}
+
+model InventoryItem {
+  id            String        @id @default(cuid())
+  name          String
+  category      ItemCategory
+  description   String?
+  quantity      Int           @default(1)
+  availableQty  Int
+  pricePerDay   Float
+  pricePerWeek  Float?
+  status        ItemStatus    @default(AVAILABLE)
+  imageUrl      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  rentalItems   RentalItem[]
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  rentals     Rental[]
+}
+
+model Rental {
+  id            String        @id @default(cuid())
+  rentalNumber  String        @unique
+  customerId    String
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  startDate     DateTime
+  endDate       DateTime
+  returnDate    DateTime?
+  totalAmount   Float
+  deposit       Float         @default(0)
+  status        RentalStatus  @default(PENDING)
+  notes         String?
+  createdById   String
+  createdBy     User          @relation("CreatedBy", fields: [createdById], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  rentalItems   RentalItem[]
+  payments      Payment[]
+}
+
+model RentalItem {
+  id              String        @id @default(cuid())
+  rentalId        String
+  rental          Rental        @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  itemId          String
+  item            InventoryItem @relation(fields: [itemId], references: [id])
+  quantity        Int
+  pricePerUnit    Float
+  subtotal        Float
+  createdAt       DateTime      @default(now())
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  rentalId      String
+  rental        Rental        @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  amount        Float
+  paymentMethod String
+  paymentStatus PaymentStatus @default(PAID)
+  transactionId String?
+  notes         String?
+  recordedById  String
+  recordedBy    User          @relation("RecordedBy", fields: [recordedById], references: [id])
+  createdAt     DateTime      @default(now())
+}
