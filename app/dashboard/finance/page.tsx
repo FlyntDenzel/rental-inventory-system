@@ -245,7 +245,7 @@ export default function FinancePage() {
                 <YAxis stroke="#6b7280" />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                  formatter={(value: any, name: string) => {
+                  formatter={(value: any, name: any) => {
                     if (name === 'Revenue') return [formatCurrency(value), 'Revenue']
                     return [value, 'Rentals']
                   }}
